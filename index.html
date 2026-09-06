@@ -1,0 +1,578 @@
+<title>Smart Analytics</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --canvas: #FFFFFF;
+    --surface-2: #F4F4F2;
+    --surface-3: #ECECE9;
+    --ink: #15161B;
+    --ink-soft: #2B2C33;
+    --muted: #63656F;
+    --border: #E2E3E7;
+    --accent: #E8491D;
+    --accent-strong: #C13A14;
+    --accent-tint: #FCE4D8;
+    --secondary: #1F3FE0;
+    --secondary-strong: #16309E;
+    --secondary-tint: #E1E7FE;
+    --shadow: 0 1px 2px rgba(21,22,27,0.05), 0 12px 30px rgba(21,22,27,0.08);
+    --font-display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+    --font-body: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --canvas: #0D0E12; --surface-2: #16171C; --surface-3: #1D1F25;
+      --ink: #F3F3F1; --ink-soft: #D6D7D3; --muted: #999AA4; --border: #292B32;
+      --accent: #FF6A3D; --accent-strong: #FF8C63; --accent-tint: #35190F;
+      --secondary: #6E86FF; --secondary-strong: #A2B0FF; --secondary-tint: #1A2145;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 12px 30px rgba(0,0,0,0.45);
+    }
+  }
+  :root[data-theme="dark"] {
+    --canvas: #0D0E12; --surface-2: #16171C; --surface-3: #1D1F25;
+    --ink: #F3F3F1; --ink-soft: #D6D7D3; --muted: #999AA4; --border: #292B32;
+    --accent: #FF6A3D; --accent-strong: #FF8C63; --accent-tint: #35190F;
+    --secondary: #6E86FF; --secondary-strong: #A2B0FF; --secondary-tint: #1A2145;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 12px 30px rgba(0,0,0,0.45);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--canvas); color: var(--ink-soft); font-family: var(--font-body); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3, h4 { font-family: var(--font-display); color: var(--ink); margin: 0; text-wrap: balance; font-weight: 700; letter-spacing: -0.01em; }
+  p { margin: 0; }
+  a { color: inherit; }
+  svg { display: block; }
+
+  .eyebrow { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-strong); display: inline-flex; align-items: center; gap: 0.6em; }
+  .eyebrow::before { content: ''; width: 16px; height: 2px; background: var(--accent); display: inline-block; }
+  .eyebrow.blue { color: var(--secondary-strong); }
+  .eyebrow.blue::before { background: var(--secondary); }
+
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 0 32px; }
+
+  /* ---------- Header ---------- */
+  header.site-header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--canvas) 92%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+  .header-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 32px; max-width: 1160px; margin: 0 auto; }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; cursor: pointer; }
+  .brand-mark { width: 32px; height: 32px; border-radius: 7px; background: var(--ink); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .brand-name { font-family: var(--font-display); font-weight: 800; font-size: 1.18rem; color: var(--ink); }
+  .brand-name span { color: var(--accent); }
+
+  nav.primary-nav { display: flex; gap: 2px; }
+  nav.primary-nav button { font-family: var(--font-body); font-size: 0.92rem; font-weight: 600; color: var(--muted); background: none; border: none; padding: 9px 13px; border-radius: 6px; cursor: pointer; transition: color 0.15s ease, background 0.15s ease; }
+  nav.primary-nav button:hover { color: var(--ink); background: var(--surface-2); }
+  nav.primary-nav button.active { color: var(--accent-strong); background: var(--accent-tint); }
+
+  .nav-cta { font-family: var(--font-body); font-weight: 700; font-size: 0.9rem; background: var(--accent); color: #fff !important; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+  .nav-cta:hover { background: var(--accent-strong); }
+
+  .menu-toggle { display: none; background: none; border: 1px solid var(--border); border-radius: 6px; width: 40px; height: 40px; align-items: center; justify-content: center; cursor: pointer; color: var(--ink); }
+
+  @media (max-width: 900px) {
+    nav.primary-nav { display: none; position: absolute; top: 100%; left: 0; right: 0; flex-direction: column; background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 20px 18px; gap: 4px; box-shadow: var(--shadow); background: var(--canvas); }
+    nav.primary-nav.open { display: flex; }
+    nav.primary-nav button { text-align: left; width: 100%; }
+    nav.primary-nav button.nav-cta-mobile { margin-top: 6px; background: var(--accent); color: #fff; border-radius: 6px; }
+    .menu-toggle { display: inline-flex; }
+    .header-row { position: relative; }
+    .header-row .nav-cta { display: none; }
+  }
+
+  main { display: block; }
+  section.page { display: none; }
+  section.page.active { display: block; animation: fadein 0.35s ease; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .section-pad { padding: 88px 0; }
+  .on-surface { background: var(--surface-2); }
+  .section-head { max-width: 660px; margin-bottom: 48px; }
+  .section-head h2 { font-size: clamp(1.8rem, 3.2vw, 2.5rem); margin-top: 12px; }
+  .section-head .lede { margin-top: 16px; font-size: 1.05rem; color: var(--muted); max-width: 60ch; }
+
+  .btn { font-family: var(--font-body); font-weight: 700; font-size: 0.96rem; padding: 13px 22px; border-radius: 7px; cursor: pointer; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 8px; }
+  .btn-primary { background: var(--ink); color: var(--canvas); }
+  .btn-primary:hover { background: var(--accent-strong); color: #fff; }
+  .btn-ghost { background: transparent; color: var(--ink); border-color: var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent-strong); }
+
+  /* ---------- Hero ---------- */
+  .hero { position: relative; padding: 76px 0 84px; overflow: hidden; }
+  .hero-dots { position: absolute; inset: 0; background-image: radial-gradient(var(--border) 1.4px, transparent 1.4px); background-size: 26px 26px; opacity: 0.7; -webkit-mask-image: linear-gradient(to bottom, black, transparent 78%); mask-image: linear-gradient(to bottom, black, transparent 78%); pointer-events: none; }
+  .hero-grid { position: relative; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center; }
+  .hero h1 { font-size: clamp(2.3rem, 4vw, 3.25rem); line-height: 1.1; margin-top: 18px; }
+  .hero .lede { margin-top: 22px; font-size: 1.12rem; color: var(--muted); max-width: 48ch; }
+  .hero-ctas { display: flex; gap: 14px; margin-top: 34px; flex-wrap: wrap; }
+
+  /* ---------- Before/After transform visual ---------- */
+  .transform { position: relative; display: flex; align-items: center; gap: 6px; }
+  .tpanel { flex: 1; background: var(--canvas); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
+  .tpanel-messy { transform: rotate(-2.5deg) translateY(4px); filter: saturate(0.75); }
+  .tpanel-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+  .tpanel-head .dots { display: flex; gap: 5px; }
+  .tpanel-head .dots span { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
+  .tpanel-head .fname { font-family: var(--font-mono); font-size: 0.6rem; color: var(--muted); }
+  .messy-table { font-family: var(--font-mono); font-size: 0.6rem; padding: 10px; color: var(--muted); }
+  .messy-table .r { display: flex; gap: 4px; padding: 3px 0; }
+  .messy-table .c { flex: 1; padding: 3px 5px; background: var(--surface-2); border-radius: 2px; }
+  .messy-table .c.err { color: var(--accent-strong); background: var(--accent-tint); }
+  .messy-table .c.blank { background: transparent; }
+  .messy-table .r.head .c { color: var(--ink); font-weight: 600; background: var(--surface-3); }
+
+  .tpanel-clean { padding: 14px 16px 16px; }
+  .clean-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .clean-head .fname { font-family: var(--font-mono); font-size: 0.62rem; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--secondary); box-shadow: 0 0 0 3px var(--secondary-tint); }
+  .clean-chart { display: flex; align-items: flex-end; gap: 6px; height: 66px; }
+  .clean-chart i { flex: 1; background: var(--accent); border-radius: 3px 3px 1px 1px; opacity: 0.9; }
+  .clean-chart i.hi { background: var(--secondary); }
+  .clean-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .clean-fields .k { font-family: var(--font-mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+  .clean-fields .v { font-family: var(--font-display); font-weight: 700; font-size: 0.92rem; color: var(--ink); margin-top: 2px; }
+
+  .transform-arrow { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .transform-arrow .lbl { font-family: var(--font-mono); font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent-strong); white-space: nowrap; }
+  @media (max-width: 980px) { .hero-grid { grid-template-columns: 1fr; } .transform { flex-direction: column; } .transform-arrow { transform: rotate(90deg); } }
+
+  /* ---------- CTA band ---------- */
+  .cta-band { background: var(--ink); padding: 72px 0; }
+  .cta-band .wrap { display: flex; justify-content: space-between; align-items: center; gap: 30px; flex-wrap: wrap; }
+  .cta-band h2 { color: var(--canvas); font-size: clamp(1.6rem, 3vw, 2.1rem); max-width: 20ch; }
+  .cta-band .btn-primary { background: var(--accent); }
+  .cta-band .btn-primary:hover { background: var(--accent-strong); }
+  .cta-band .btn-ghost { color: var(--canvas); border-color: rgba(243,243,241,0.3); }
+
+  /* ---------- Cards / grids ---------- */
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  @media (max-width: 980px) { .grid-4 { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 700px) { .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; } }
+
+  .icon-badge { width: 42px; height: 42px; border-radius: 9px; background: var(--accent-tint); color: var(--accent-strong); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .icon-badge.blue { background: var(--secondary-tint); color: var(--secondary-strong); }
+
+  .card { background: var(--canvas); border: 1px solid var(--border); border-radius: 12px; padding: 26px; }
+  .card h3 { font-size: 1.1rem; margin: 16px 0 10px; }
+  .card p { color: var(--muted); font-size: 0.95rem; }
+  .card .tag { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--secondary-strong); background: var(--secondary-tint); padding: 3px 8px; border-radius: 5px; display: inline-block; margin-bottom: 12px; }
+  .card .example { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border); font-size: 0.86rem; color: var(--ink-soft); }
+  .card .example strong { color: var(--accent-strong); }
+
+  /* ---------- Framework ---------- */
+  .framework-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  @media (max-width: 860px) { .framework-grid { grid-template-columns: 1fr; } }
+  .framework-cell { background: var(--canvas); border: 1px solid var(--border); border-radius: 12px; padding: 30px 26px; position: relative; overflow: hidden; }
+  .framework-cell::before { content: attr(data-letter); position: absolute; top: -18px; right: -6px; font-family: var(--font-display); font-weight: 800; font-size: 5.5rem; color: var(--surface-2); z-index: 0; }
+  .framework-cell > * { position: relative; z-index: 1; }
+  .framework-kicker { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-strong); }
+  .framework-cell h3 { margin-top: 10px; font-size: 1.18rem; }
+  .framework-cell p { margin-top: 12px; color: var(--muted); font-size: 0.96rem; }
+
+  /* ---------- Industries ---------- */
+  .industry-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  @media (max-width: 760px) { .industry-grid { grid-template-columns: 1fr; } }
+  .industry-cell { background: var(--canvas); padding: 26px 26px; display: flex; gap: 16px; }
+  .industry-cell h3 { font-size: 1.05rem; margin-bottom: 6px; }
+  .industry-cell p { color: var(--muted); font-size: 0.92rem; }
+
+  /* ---------- About narrative ---------- */
+  .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
+  @media (max-width: 860px) { .about-grid { grid-template-columns: 1fr; gap: 36px; } }
+  .about-lead { font-family: var(--font-display); font-weight: 700; font-size: 1.7rem; color: var(--ink); line-height: 1.35; }
+  .about-copy { margin-top: 20px; color: var(--muted); font-size: 1.02rem; }
+  .about-copy + .about-copy { margin-top: 14px; }
+  .about-copy strong { color: var(--ink-soft); }
+
+  .process-list { display: flex; flex-direction: column; border-top: 1px solid var(--border); margin-top: 20px; }
+  .process-item { display: grid; grid-template-columns: 32px 1fr; gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--border); }
+  .process-num { font-family: var(--font-mono); color: var(--accent-strong); font-size: 0.85rem; padding-top: 2px; }
+  .process-item h4 { font-size: 1rem; }
+  .process-item p { margin-top: 6px; color: var(--muted); font-size: 0.92rem; }
+
+  /* ---------- Products ---------- */
+  .product-card { background: var(--canvas); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+  .product-head { padding: 22px 24px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+  .product-head .tag { margin-bottom: 10px; }
+  .product-head h3 { font-size: 1.15rem; }
+  .product-body { padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
+  .pf .k { font-family: var(--font-mono); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+  .pf .v { font-size: 0.94rem; color: var(--ink-soft); margin-top: 3px; }
+
+  /* ---------- Partners / Tools ---------- */
+  .tool-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  @media (max-width: 760px) { .tool-grid { grid-template-columns: repeat(2, 1fr); } }
+  .tool-card { border: 1px solid var(--border); border-radius: 12px; padding: 24px 20px; text-align: center; background: var(--canvas); }
+  .tool-card .glyph { width: 44px; height: 44px; margin: 0 auto 14px; border-radius: 10px; background: var(--surface-2); display: flex; align-items: center; justify-content: center; color: var(--ink); font-family: var(--font-display); font-weight: 800; }
+  .tool-card .name { font-weight: 700; color: var(--ink); font-size: 0.98rem; }
+  .tool-card .role { margin-top: 4px; font-size: 0.82rem; color: var(--muted); }
+
+  .note-box { margin-top: 36px; border-left: 3px solid var(--accent); padding: 16px 22px; color: var(--muted); font-size: 0.92rem; background: var(--surface-2); border-radius: 0 8px 8px 0; }
+  .note-box strong { color: var(--ink-soft); }
+
+  /* ---------- Contact ---------- */
+  .contact-grid { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 60px; }
+  @media (max-width: 860px) { .contact-grid { grid-template-columns: 1fr; } }
+  .contact-detail { padding: 18px 0; border-top: 1px solid var(--border); }
+  .contact-detail:last-of-type { border-bottom: 1px solid var(--border); }
+  .contact-detail .label { font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .contact-detail .value { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; color: var(--ink-soft); margin-top: 4px; }
+
+  form.contact-form { display: flex; flex-direction: column; gap: 18px; }
+  .field { display: flex; flex-direction: column; gap: 7px; }
+  .field label { font-family: var(--font-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .field input, .field textarea { font-family: var(--font-body); font-size: 0.98rem; color: var(--ink); background: var(--canvas); border: 1px solid var(--border); border-radius: 7px; padding: 12px 14px; resize: vertical; }
+  .field input:focus, .field textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+  .form-status { font-size: 0.88rem; color: var(--accent-strong); min-height: 1.2em; }
+
+  footer { border-top: 1px solid var(--border); padding: 44px 0; background: var(--surface-2); }
+  .footer-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+  .footer-links { display: flex; gap: 22px; font-size: 0.9rem; color: var(--muted); }
+  .footer-links button { background: none; border: none; color: var(--muted); cursor: pointer; font-family: var(--font-body); font-size: 0.9rem; padding: 0; }
+  .footer-links button:hover { color: var(--accent-strong); }
+  .footer-fine { margin-top: 22px; font-size: 0.8rem; color: var(--muted); font-family: var(--font-mono); }
+
+  ::selection { background: var(--accent-tint); color: var(--accent-strong); }
+</style>
+
+<header class="site-header">
+  <div class="header-row">
+    <a class="brand" data-route="home" href="#home">
+      <span class="brand-mark"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 18V10M12 18V5M20 18V13" stroke="#FF6A3D" stroke-width="2.4" stroke-linecap="round"/></svg></span>
+      <span class="brand-name">Smart<span>Analytics</span></span>
+    </a>
+    <nav class="primary-nav" id="primaryNav">
+      <button data-route="industries">Industries</button>
+      <button data-route="expertise">Expertise</button>
+      <button data-route="products">Products</button>
+      <button data-route="solutions">Solutions</button>
+      <button data-route="partners">Partners</button>
+      <button data-route="about">About Us</button>
+      <button data-route="contact" class="nav-cta-mobile">Contact Us</button>
+    </nav>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <button class="nav-cta" data-route="contact">Contact Us</button>
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ===================== HOME ===================== -->
+  <section class="page active" id="home">
+    <div class="hero">
+      <div class="hero-dots"></div>
+      <div class="wrap hero-grid">
+        <div>
+          <span class="eyebrow">Data analytics consultancy</span>
+          <h1>Data work that changes what happens next.</h1>
+          <p class="lede">Smart Analytics helps finance, retail, sales, FMCG, manufacturing and MSME teams across India turn scattered operational data into decisions worth acting on — not another dashboard nobody opens.</p>
+          <div class="hero-ctas">
+            <button class="btn btn-primary" data-route="solutions">See our solutions</button>
+            <button class="btn btn-ghost" data-route="contact">Talk to us</button>
+          </div>
+        </div>
+
+        <div class="transform">
+          <div class="tpanel tpanel-messy">
+            <div class="tpanel-head"><div class="dots"><span></span><span></span><span></span></div><span class="fname">Sales_FINAL_v3_useTHIS.xlsx</span></div>
+            <div class="messy-table">
+              <div class="r head"><div class="c">Regn</div><div class="c">Q1</div><div class="c">Q2</div><div class="c">Q3</div></div>
+              <div class="r"><div class="c">North</div><div class="c">1,20,000</div><div class="c err">#REF!</div><div class="c">118400</div></div>
+              <div class="r"><div class="c">south</div><div class="c">98000</div><div class="c">101,200</div><div class="c blank"></div></div>
+              <div class="r"><div class="c">North (2)</div><div class="c">1,20,000</div><div class="c">--</div><div class="c">?</div></div>
+            </div>
+          </div>
+          <div class="transform-arrow">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M4 12h15M13 6l6 6-6 6" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="lbl">We fix this</span>
+          </div>
+          <div class="tpanel tpanel-clean">
+            <div class="clean-head"><span class="fname"><span class="live-dot"></span>Regional performance</span></div>
+            <div class="clean-chart">
+              <i style="height:40%"></i><i style="height:58%"></i><i style="height:50%"></i><i style="height:74%" class="hi"></i><i style="height:66%"></i><i style="height:88%"></i>
+            </div>
+            <div class="clean-fields">
+              <div class="pf"><div class="k">Sources merged</div><div class="v">6 → 1</div></div>
+              <div class="pf"><div class="k">Reconciled by</div><div class="v">Automatically</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wrap section-pad">
+      <div class="section-head">
+        <span class="eyebrow">How we work</span>
+        <h2>Three pillars, one practice.</h2>
+        <p class="lede">Most engagements move through some version of this — see clearly, understand why, then build the habit of acting on it.</p>
+      </div>
+      <div class="framework-grid">
+        <div class="framework-cell" data-letter="S">
+          <div class="framework-kicker">See</div>
+          <h3>Reporting &amp; dashboards</h3>
+          <p>A clear, current view of what's actually happening across stores, regions or accounts — built to be opened, not just built.</p>
+        </div>
+        <div class="framework-cell" data-letter="U">
+          <div class="framework-kicker">Understand</div>
+          <h3>Applied &amp; predictive analytics</h3>
+          <p>Analysis that explains why the numbers moved, and what's likely to happen next — not just a chart with a caption.</p>
+        </div>
+        <div class="framework-cell" data-letter="A">
+          <div class="framework-kicker">Act</div>
+          <h3>Data foundations &amp; support</h3>
+          <p>For teams without a data function yet — the structure and ongoing support that make the first two pillars stick.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta-band">
+      <div class="wrap">
+        <h2>Let's make your data useful.</h2>
+        <div style="display:flex; gap:14px; flex-wrap:wrap;">
+          <button class="btn btn-primary" data-route="contact">Contact us</button>
+          <button class="btn btn-ghost" data-route="industries">See industries we serve</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== INDUSTRIES ===================== -->
+  <section class="page" id="industries">
+    <div class="wrap section-pad">
+      <div class="section-head">
+        <span class="eyebrow">Industries</span>
+        <h2>We go deep into a sector before we generalise.</h2>
+        <p class="lede">These are the industries our work spans most often — all of them lean heavily on operational data, even when they don't yet have the tools to use it well.</p>
+      </div>
+      <div class="industry-grid">
+        <div class="industry-cell"><span class="icon-badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M4 21V9l8-5 8 5v12M9 21v-6h6v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><h3>Finance &amp; BFSI</h3><p>Financial reporting, reconciliation support and portfolio-level analysis for lenders, insurers and financial services teams.</p></div></div>
+        <div class="industry-cell"><span class="icon-badge blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 2l1.5 5M18 2l-1.5 5M3 7h18l-1.5 12h-15L3 7z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><h3>Retail &amp; e-commerce</h3><p>Store and channel performance, inventory patterns and customer analysis for retail chains, marketplaces and standalone brands.</p></div></div>
+        <div class="industry-cell"><span class="icon-badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 17l6-6 4 4 8-8M21 7v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><h3>Sales &amp; distribution</h3><p>Pipeline, territory and distribution analytics for sales teams who need to know where performance is actually coming from.</p></div></div>
+        <div class="industry-cell"><span class="icon-badge blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="8" width="18" height="12" rx="1" stroke="currentColor" stroke-width="1.8"/><path d="M3 8l9-5 9 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><h3>FMCG &amp; consumer goods</h3><p>Distribution, demand and SKU-level analysis for fast-moving consumer goods brands operating across many markets.</p></div></div>
+        <div class="industry-cell"><span class="icon-badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 21V10l5-3 5 3v11M13 21v-7l5-3 3 2v8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><h3>Manufacturing &amp; supply chain</h3><p>Production, inventory and logistics data brought together to flag bottlenecks before they become costly.</p></div></div>
+        <div class="industry-cell"><span class="icon-badge blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-4.35-9.5-9A5.5 5.5 0 0112 6.5 5.5 5.5 0 0121.5 12c-2.5 4.65-9.5 9-9.5 9z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><h3>Healthcare &amp; pharma</h3><p>Operational reporting for clinics, pharmacies and distributors — patient volumes, stock levels and compliance-adjacent tracking.</p></div></div>
+        <div class="industry-cell"><span class="icon-badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="1" y="8" width="14" height="9" rx="1" stroke="currentColor" stroke-width="1.8"/><path d="M15 11h4l3 3v3h-7v-6z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="6" cy="19" r="1.6" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="19" r="1.6" stroke="currentColor" stroke-width="1.6"/></svg></span><div><h3>Logistics &amp; transportation</h3><p>Route, fleet and fulfilment data analysis for businesses moving goods across cities and regions.</p></div></div>
+        <div class="industry-cell"><span class="icon-badge blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 21V9l8-6 8 6v12M9 21v-5h6v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><h3>MSMEs, all sectors</h3><p>Smaller and mid-sized businesses outside these categories that need a first proper data setup rather than an enterprise-scale one.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== EXPERTISE ===================== -->
+  <section class="page" id="expertise">
+    <div class="wrap section-pad">
+      <div class="section-head">
+        <span class="eyebrow">Expertise</span>
+        <h2>Technical depth, paired with domain context.</h2>
+        <p class="lede">We pair the technical side of data work with a working knowledge of the sectors we operate in — one without the other tends to produce analysis nobody trusts or nobody uses.</p>
+      </div>
+      <div class="grid-2" style="margin-bottom:20px;">
+        <div class="card">
+          <span class="tag">Technical expertise</span>
+          <h3 style="margin-top:0;">The craft of the work</h3>
+          <p>Data engineering &amp; pipeline clean-up, business intelligence &amp; dashboarding, statistical and predictive analysis, and the reporting layer that turns all of it into something a non-analyst can use confidently.</p>
+        </div>
+        <div class="card">
+          <span class="tag">Domain expertise</span>
+          <h3 style="margin-top:0;">The context behind the numbers</h3>
+          <p>Retail and FMCG sales cycles, distribution and territory structures common in Indian sales operations, financial reporting conventions, and the resource constraints typical of MSMEs.</p>
+        </div>
+      </div>
+      <div class="grid-4">
+        <div class="card"><span class="icon-badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 19V5M4 19h16M8 15l3-4 3 3 4-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><h3>Data engineering</h3><p>Cleaning, structuring and connecting messy or disconnected data sources.</p></div>
+        <div class="card"><span class="icon-badge blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/></svg></span><h3>BI &amp; dashboards</h3><p>Purpose-built views tied to metrics a business actually tracks.</p></div>
+        <div class="card"><span class="icon-badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 3v18h18M7 15l4-5 3 3 5-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><h3>Predictive analysis</h3><p>Forecasting demand, sales and other patterns from historical data.</p></div>
+        <div class="card"><span class="icon-badge blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2v20M2 12h20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/></svg></span><h3>Data strategy</h3><p>Deciding what to track, how, and who should be looking at it.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PRODUCTS ===================== -->
+  <section class="page" id="products">
+    <div class="wrap section-pad">
+      <div class="section-head">
+        <span class="eyebrow">Products</span>
+        <h2>Fixed-scope offerings, when you don't need a custom engagement.</h2>
+        <p class="lede">Not every problem needs an open-ended project. These are productised starting points with a set scope, timeline and deliverable — sample offerings, ready to be renamed and priced before publishing.</p>
+      </div>
+      <div class="grid-3">
+        <div class="product-card">
+          <div class="product-head"><span class="tag">For first-time setups</span><h3>MSME Data Starter</h3></div>
+          <div class="product-body">
+            <div class="pf"><div class="k">Duration</div><div class="v">~4 weeks</div></div>
+            <div class="pf"><div class="k">Deliverable</div><div class="v">One clean, working dashboard and a basic weekly reporting habit</div></div>
+            <div class="pf"><div class="k">Ideal for</div><div class="v">Businesses with no data team yet, working mostly off spreadsheets</div></div>
+          </div>
+        </div>
+        <div class="product-card">
+          <div class="product-head"><span class="tag">For retail &amp; FMCG</span><h3>Retail Performance Pack</h3></div>
+          <div class="product-body">
+            <div class="pf"><div class="k">Duration</div><div class="v">6–8 weeks</div></div>
+            <div class="pf"><div class="k">Deliverable</div><div class="v">Store and SKU-level performance dashboard, plus a monthly trend read-out</div></div>
+            <div class="pf"><div class="k">Ideal for</div><div class="v">Retail chains and FMCG distributors tracking multiple locations or SKUs</div></div>
+          </div>
+        </div>
+        <div class="product-card">
+          <div class="product-head"><span class="tag">For an existing dashboard</span><h3>Dashboard Rescue</h3></div>
+          <div class="product-body">
+            <div class="pf"><div class="k">Duration</div><div class="v">2–3 weeks</div></div>
+            <div class="pf"><div class="k">Deliverable</div><div class="v">An existing dashboard rebuilt, documented and made trustworthy again</div></div>
+            <div class="pf"><div class="k">Ideal for</div><div class="v">Teams with a dashboard nobody quite trusts anymore</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SOLUTIONS ===================== -->
+  <section class="page" id="solutions">
+    <div class="wrap section-pad">
+      <div class="section-head">
+        <span class="eyebrow">Solutions</span>
+        <h2>Where we typically get pulled in.</h2>
+        <p class="lede">Broader capability areas we draw on — most custom engagements combine two or three of these rather than fitting neatly into one.</p>
+      </div>
+      <div class="grid-3">
+        <div class="card"><span class="icon-badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 19V5M4 19h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="7" y="11" width="3" height="6" fill="currentColor"/><rect x="12" y="8" width="3" height="9" fill="currentColor"/><rect x="17" y="13" width="3" height="4" fill="currentColor"/></svg></span><h3>Data analytics &amp; reporting</h3><p>Turning raw transactional, operational or sales data into reports that are actually read — not just filed away after month-end.</p></div>
+        <div class="card"><span class="icon-badge blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><h3>Business intelligence dashboards</h3><p>Purpose-built dashboards tied to the metrics a business genuinely tracks, rather than a generic template of charts.</p>
+          <div class="example"><strong>In practice:</strong> we've rebuilt store-level dashboards for a large-format retail chain (Vishal Mega Mart) that leadership actually trusted again.</div>
+        </div>
+        <div class="card"><span class="icon-badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 17l6-6 4 4 8-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><h3>Sales &amp; retail analytics</h3><p>Store, SKU and channel-level analysis for retail and FMCG teams that need to know what's actually moving.</p>
+          <div class="example"><strong>In practice:</strong> regional sales and distribution tracking for an FMCG brand (Dabur) across multiple markets.</div>
+        </div>
+        <div class="card"><span class="icon-badge blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><h3>Data strategy for smaller businesses</h3><p>Helping smaller businesses put basic data collection and reporting practices in place before investing in anything more complex.</p></div>
+        <div class="card"><span class="icon-badge"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 12h4l3-8 4 16 3-8h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><h3>Predictive &amp; trend analysis</h3><p>Forecasting demand, sales or other patterns from historical data, scoped to what the business can realistically act on.</p></div>
+        <div class="card"><span class="icon-badge blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M20.5 9.5L12 3 3.5 9.5 12 16l8.5-6.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6 12.5V17l6 4.5 6-4.5v-4.5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span><h3>Custom data projects</h3><p>One-off or ongoing work scoped to a specific problem — a messy dataset, a one-time analysis, or a recurring reporting need.</p></div>
+      </div>
+      <div class="note-box"><strong>Before publishing:</strong> confirm Dabur and Vishal Mega Mart are comfortable being named here, and replace these lines with the specific, approved detail for each engagement.</div>
+    </div>
+  </section>
+
+  <!-- ===================== PARTNERS ===================== -->
+  <section class="page" id="partners">
+    <div class="wrap section-pad">
+      <div class="section-head">
+        <span class="eyebrow">Partners</span>
+        <h2>Platforms we build on.</h2>
+        <p class="lede">We're tool-agnostic by design and pick whatever a client already runs on, but these are the platforms we work in most often.</p>
+      </div>
+      <div class="tool-grid">
+        <div class="tool-card"><div class="glyph">Bi</div><div class="name">Power BI</div><div class="role">Dashboards &amp; reporting</div></div>
+        <div class="tool-card"><div class="glyph">Tb</div><div class="name">Tableau</div><div class="role">Visualization &amp; BI</div></div>
+        <div class="tool-card"><div class="glyph">Sh</div><div class="name">Excel &amp; Sheets</div><div class="role">Analysis &amp; modelling</div></div>
+        <div class="tool-card"><div class="glyph">Py</div><div class="name">Python &amp; SQL</div><div class="role">Data engineering</div></div>
+      </div>
+      <div class="note-box">We work as an independent analytics consultancy — this is a list of tools we're proficient in, not a claim of formal partnership or certification with the vendors above.</div>
+    </div>
+  </section>
+
+  <!-- ===================== ABOUT ===================== -->
+  <section class="page" id="about">
+    <div class="wrap section-pad">
+      <span class="eyebrow">About Us</span>
+      <div class="about-grid" style="margin-top:18px;">
+        <p class="about-lead">We started Smart Analytics because most Indian businesses we met had plenty of data and very little use for it.</p>
+        <div>
+          <p class="about-copy" style="margin-top:0;">Smart Analytics is a data analytics consultancy based in India. We work with organisations that generate a lot of operational data — sales figures, transaction logs, store or distribution numbers — but don't yet have the internal team to turn that into something usable. Our work has included <strong>Dabur</strong> in FMCG, <strong>Vishal Mega Mart</strong> in retail, and a number of MSMEs that are analytics-curious but resource-constrained.</p>
+          <p class="about-copy">Across finance, retail, sales, FMCG and beyond, the underlying problem tends to repeat: the data exists, but it lives in disconnected spreadsheets, legacy reports or systems nobody fully trusts. Our job is to make that data legible — clean it, structure it, and build the reporting or analysis layer that lets people actually make decisions with it.</p>
+          <p class="about-copy">We keep engagements scoped to a real business question rather than selling a fixed "analytics package." Some clients need a single dashboard rebuilt properly; others need ongoing support as an outsourced analytics function. Both are common.</p>
+        </div>
+      </div>
+      <div class="process-list">
+        <div class="process-item"><span class="process-num">01</span><div><h4>Understand the problem</h4><p>Before touching any data, we sit with the actual business question — what decision this needs to support, and who's making it.</p></div></div>
+        <div class="process-item"><span class="process-num">02</span><div><h4>Structure the data</h4><p>Source, clean and organise the underlying data — often the part that takes longest, and the part most projects skip.</p></div></div>
+        <div class="process-item" style="border-bottom:none;"><span class="process-num">03</span><div><h4>Deliver something usable</h4><p>A dashboard, report or model that's built to be used weekly, not opened once and forgotten.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CONTACT ===================== -->
+  <section class="page" id="contact">
+    <div class="wrap section-pad">
+      <div class="section-head">
+        <span class="eyebrow">Get in touch</span>
+        <h2>Tell us what you're trying to figure out.</h2>
+        <p class="lede">Whether it's a specific dataset or a broader "we know we should be doing more with our data" — happy to have a first conversation.</p>
+      </div>
+      <div class="contact-grid">
+        <div>
+          <div class="contact-detail"><div class="label">Email</div><div class="value">hr@smartanalyticssolutions.org</div></div>
+          <div class="contact-detail"><div class="label">Phone</div><div class="value">+91 00000 00000</div></div>
+          <div class="contact-detail"><div class="label">Based in</div><div class="value">India</div></div>
+        </div>
+        <form class="contact-form" id="contactForm">
+          <div class="field"><label for="cf-name">Name</label><input id="cf-name" name="name" type="text" required></div>
+          <div class="field"><label for="cf-email">Email</label><input id="cf-email" name="email" type="email" required></div>
+          <div class="field"><label for="cf-company">Company</label><input id="cf-company" name="company" type="text"></div>
+          <div class="field"><label for="cf-message">What are you trying to solve?</label><textarea id="cf-message" name="message" rows="4" required></textarea></div>
+          <button type="submit" class="btn btn-primary" style="align-self:flex-start;">Send message</button>
+          <div class="form-status" id="formStatus"></div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-row">
+      <span class="brand-name">Smart<span style="color:var(--accent);">Analytics</span></span>
+      <div class="footer-links">
+        <button data-route="solutions">Solutions</button>
+        <button data-route="products">Products</button>
+        <button data-route="contact">Contact</button>
+      </div>
+    </div>
+    <div class="footer-fine">© <span id="year"></span> Smart Analytics · smartyanalytics.org · India</div>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var routes = ['home', 'industries', 'expertise', 'products', 'solutions', 'partners', 'about', 'contact'];
+    var sections = {};
+    routes.forEach(function (r) { sections[r] = document.getElementById(r); });
+    var navButtons = document.querySelectorAll('[data-route]');
+
+    function go(route, updateHash) {
+      if (routes.indexOf(route) === -1) route = 'home';
+      routes.forEach(function (r) { sections[r].classList.toggle('active', r === route); });
+      navButtons.forEach(function (b) {
+        if (b.tagName === 'BUTTON' && b.closest('nav')) b.classList.toggle('active', b.getAttribute('data-route') === route);
+      });
+      if (updateHash !== false) history.replaceState(null, '', '#' + route);
+      document.getElementById('primaryNav').classList.remove('open');
+      window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+    }
+
+    navButtons.forEach(function (b) {
+      b.addEventListener('click', function (e) { e.preventDefault(); go(b.getAttribute('data-route')); });
+    });
+    document.getElementById('menuToggle').addEventListener('click', function () {
+      document.getElementById('primaryNav').classList.toggle('open');
+    });
+
+    var initial = (location.hash || '#home').replace('#', '');
+    go(initial, false);
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    var form = document.getElementById('contactForm');
+    var status = document.getElementById('formStatus');
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var name = document.getElementById('cf-name').value;
+      var email = document.getElementById('cf-email').value;
+      var company = document.getElementById('cf-company').value;
+      var message = document.getElementById('cf-message').value;
+      var subject = encodeURIComponent('Website enquiry from ' + name);
+      var body = encodeURIComponent('Name: ' + name + '\nEmail: ' + email + '\nCompany: ' + company + '\n\n' + message);
+      window.location.href = 'mailto:hr@smartanalyticssolutions.org?subject=' + subject + '&body=' + body;
+      status.textContent = 'Opening your email client to send this…';
+    });
+  })();
+</script>
